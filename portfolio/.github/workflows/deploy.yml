@@ -1,0 +1,63 @@
+name: Deploy to GitHub Pages
+
+# Bei Push auf main deployen. "workflow_dispatch" erlaubt zusätzlich
+# einen manuellen Trigger über den Actions-Tab.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Berechtigungen für das offizielle deploy-pages-Action.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Nur ein Deploy gleichzeitig; neue Pushes brechen laufende ab.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (static export)
+        # WICHTIG: Wenn dein Repo nicht "portfolio" heißt, hier den Pfad anpassen.
+        # Beispiel: Repo "fabio-portfolio" → "/fabio-portfolio".
+        # Bei einer User-Site (Repo "<user>.github.io") bleibt der Wert leer ("").
+        env:
+          NEXT_PUBLIC_BASE_PATH: 
+        run: npm run build
+
+      - name: Disable Jekyll
+        # GitHub Pages ignoriert sonst Ordner, die mit "_" beginnen (z.B. _next).
+        run: touch ./out/.nojekyll
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
