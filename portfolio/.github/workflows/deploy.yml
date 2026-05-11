@@ -39,7 +39,7 @@ jobs:
         # Beispiel: Repo "fabio-portfolio" → "/fabio-portfolio".
         # Bei einer User-Site (Repo "<user>.github.io") bleibt der Wert leer ("").
         env:
-          NEXT_PUBLIC_BASE_PATH: 
+          NEXT_PUBLIC_BASE_PATH: portfolio
         run: npm run build
 
       - name: Disable Jekyll
